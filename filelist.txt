@@ -1,0 +1,15 @@
+passwd
+shadow
+*.ini
+*.pk12
+*.pem
+*.pk12
+*.priv
+*.vmem
+*.vmdk
+*.vdi
+*.kdb
+*.kdbx
+my.cnf
+id_rsa
+*.bak
