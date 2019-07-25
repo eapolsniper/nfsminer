@@ -4,6 +4,13 @@ logfile="nfsscanner.log"
 projectprefix=`date +Results_%d%b%Y_%Hh%Mm%Ss`
 singlescan=0
 scanfile=0
+dt=0
+ft=0
+gt=0
+disablescans=0
+disablefilescans=0
+disablegrepscans=0
+disableunmount=0
 
 #Command Line Options
 POSITIONAL=()
@@ -13,24 +20,59 @@ key="$1"
 
 case $key in
     -h|--help)
-    echo "Help File Here"
-    shift # past argument
-    shift # past value
-    ;;
+    	echo "Help File Here"
+    	shift # past argument
+    	shift # past value
+    	;;
     -t|--targetfile)
-    targetfile="$2"
-    scanfile=1
-    echo "Target File is: $targetfile"
-    shift # past argument
-    shift # past value
-    ;;
+    	targetfile="$2"
+    	scanfile=1
+    	echo "Target File is: $targetfile"
+    	shift # past argument
+    	shift # past value
+    	;;
     -s|--singlehost)
-    hosttoscan="$2"
-    singlescan=1
-    scanip="$2"
-    shift # past argument
-    shift # past value
-    ;;
+    	hosttoscan="$2"
+    	singlescan=1
+    	scanip="$2"
+    	shift # past argument
+    	shift # past value
+    	;;
+    -dt|--discoverytimeout)
+	dt=1
+	dtimeout=$2
+	shift
+	shift
+	;;
+    -ft|--filescantimeout)
+	ft=1
+	ftimeout=$2
+    	shift
+	shift
+	;;
+    -gt|--grepscantimeout)
+    	gt=1
+	gtimeout=$2
+	shift
+	shift
+	;;
+    -ds|--disablescans)
+	disablescans=1
+	shift
+	;;
+    -df|--disablefilescans)
+    	disablefilescans=1
+	shift
+	;;
+    -dg|--disablegrepscans)
+	disablegrepscans=1
+	shift
+	;;
+    -du|--disbaleunmount)
+	disableunmount=1
+	shift
+	;;
+ 	
     *)    # unknown option
 	    echo "unknown option included. Try Harder."
     POSITIONAL+=("$1") # save it in an array for later
@@ -58,15 +100,21 @@ exporttest () {
 }
 
 dismount () {
-	umount $scandir
-
-	if [ "$(ls -A $scandir)" ]
+	if [ $disableunmount -eq 0 ] 
 	then
-		echo "Not Deleting $scandir, not empty. dismount may have failed!"
+		umount $scandir
+
+		if [ "$(ls -A $scandir)" ]
+		then
+			echo "Not Deleting $scandir, not empty. dismount may have failed!"
+		else
+			#echo "unmounting drive $scandir"
+		rm -rf $scandir
+		fi
 	else
-		#echo "unmounting drive $scandir"
-	rm -rf $scandir
+		echo -e "\e[33m\tLeaving $scantarget:$exporttarget mounted at $scandir \e[0m"
 	fi
+
 }
 
 
@@ -151,35 +199,40 @@ targetscan () {
 			find $scandir -maxdepth 3 2>/dev/null >> $hostscanlog.verbose
 			echo "--------------" >> $hostscanlog.verbose
 			
-
-			if test -f "filelist.txt"
+			if [ $disablescans -eq 1 ]
 			then
-				local counter=0
-				for filesearch in `cat filelist.txt`
-				do
-					if [ $counter -eq 0 ]
-					then
-						local filestring=$(echo "-iname $filesearch")
-						local counter=1
-					else
-						local filestring=$(echo "$filestring -o -iname $filesearch")
-					fi
-				done
-				#Loaded Find statement to look for interesting files:
-				for findloot in `find $scandir \( $filestring \) 2>/dev/null`
-				do
-					echo -e "\e[92mPossible Loot Found: $findloot\e[0m" | tee $projectprevix/loot.txt
-				done
+				#Interesting File scan
+				if test -f "filelist.txt"
+				then
+					local counter=0
+					for filesearch in `cat filelist.txt`
+					do
+						if [ $counter -eq 0 ]
+						then
+							local filestring=$(echo "-iname $filesearch")
+							local counter=1
+						else
+							local filestring=$(echo "$filestring -o -iname $filesearch")
+						fi
+					done
+					#Loaded Find statement to look for interesting files:
+					for findloot in `find $scandir \( $filestring \) 2>/dev/null`
+					do
+						echo -e "\e[92mPossible Loot Found: $findloot\e[0m" | tee $projectprevix/loot.txt
+					done
 
-				#Loaded Grep statement to look for contents of files:
-				#for greploot in `egrep -ir "pass=|password=|" $scandir 2>/dev/null`
-				#do
-				#	local cleanloot=$(echo $greploot | cut -d"/" -f 5)
-				#	echo -e "\e[92mPossible Loot Found: $scantarget:$exporttarget/$cleanloot\e[0m"| tee $projectprefix/loot.txt
-				#done
 
-			else
-				echo "filelist.txt is missing, populate to test for interesting files on NFS exports!"
+				else
+					echo "filelist.txt is missing, populate to test for interesting files on NFS exports!"
+				fi
+			#Grep Based File Contents Scan
+
+					#Loaded Grep statement to look for contents of files:
+					#for greploot in `egrep -ir "pass=|password=|" $scandir 2>/dev/null`
+					#do
+					#	local cleanloot=$(echo $greploot | cut -d"/" -f 5)
+					#	echo -e "\e[92mPossible Loot Found: $scantarget:$exporttarget/$cleanloot\e[0m"| tee $projectprefix/loot.txt
+					#done
 			fi
 
 			#Unmount the export
