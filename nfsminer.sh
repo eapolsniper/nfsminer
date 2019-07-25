@@ -90,12 +90,17 @@ generate_dirname () {
 
 exporttest () {
 	exportresult=0
-	if [[ $(showmount -e $scantarget 2>&1) == *"Export list"* ]]
+	if [ $dt -eq 0 ]
+	then
+	#Standard showmount timeout of 5 seconds. If $dt is set by command line then the value presented by the user is accepted.
+	dtimeout=5
+	fi
+	if [[ $(timeout -k 1 $dtimeout showmount -e $scantarget 2>&1) == *"Export list"* ]]
 	then	
 		exportresult=1
-		#echo "Exports available on $scantarget!"
+		echo "Exports available on $scantarget!"
 	else
-		echo -e "\e[31mNo accessible Exports on $scantarget. Skipping host\e[0m"
+		echo -e "\e[31mNo accessible Exports on $scantarget or timeout exceeded. Skipping host\e[0m"
 	fi
 }
 
@@ -125,7 +130,7 @@ targetscan () {
 	then
 		echo "Exports found on $scantarget. Scanning exports."
 		#Gather list of exports for the scan target
-		for exporttarget in `showmount -e $scantarget | cut -d" " -f 1 | grep -v "Export"`
+		for exporttarget in `timeout -k 1 $dtimeout showmount -e $scantarget | cut -d" " -f 1 | grep -v "Export"`
 		do
 			#Generate a Directory Name
 			generate_dirname
@@ -217,8 +222,14 @@ targetscan () {
 							local filestring=$(echo "$filestring -o -iname $filesearch")
 						fi
 					done
+
+					#Checking for Timeout override. Default is 10 Minutes
+					if [ $ft -eq 0 ]
+					then
+						ftimeout=10m
+					fi
 					#Loaded Find statement to look for interesting files:
-					for findloot in `find $scandir \( $filestring \) 2>/dev/null`
+					for findloot in `timeout -k 1 $ftimeout find $scandir \( $filestring \) 2>/dev/null`
 					do
 						echo -e "\e[92mPossible Interesting File Found: $findloot\e[0m" | tee $projectprevix/loot.txt
 					done
@@ -232,9 +243,15 @@ targetscan () {
 				if [ $enablegrepscans -eq 1 ]
 				then
 					#Grep Based File Contents Scan
+					
+					#Checking for Timeout override. Default is 10 minutes.
+					if [ $gt -eq 0 ]
+					then
+						gtimeout=10m
+					fi
 
 					#Loaded Grep statement to look for contents of files:
-					for greploot in `egrep -ir "pass=|password=|" $scandir 2>/dev/null`
+					for greploot in `timeout -k 1 $gtimeout egrep -ir "pass=|password=|" $scandir 2>/dev/null`
 					do
 						local cleanloot=$(echo $greploot | cut -d"/" -f 5)
 						echo -e "\e[92mPossible Interesting Content Found: $scantarget:$exporttarget/$cleanloot\e[0m"| tee $projectprefix/loot.txt
