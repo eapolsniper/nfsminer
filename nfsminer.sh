@@ -199,8 +199,10 @@ targetscan () {
 			find $scandir -maxdepth 3 2>/dev/null >> $hostscanlog.verbose
 			echo "--------------" >> $hostscanlog.verbose
 			
-			if [ $disablescans -eq 1 ]
+			if [ $disablescans -eq 0 ]
 			then
+				if [ $disablefilescans -eq 0]
+				then
 				#Interesting File scan
 				if test -f "filelist.txt"
 				then
@@ -218,21 +220,26 @@ targetscan () {
 					#Loaded Find statement to look for interesting files:
 					for findloot in `find $scandir \( $filestring \) 2>/dev/null`
 					do
-						echo -e "\e[92mPossible Loot Found: $findloot\e[0m" | tee $projectprevix/loot.txt
+						echo -e "\e[92mPossible Interesting File Found: $findloot\e[0m" | tee $projectprevix/loot.txt
 					done
 
 
 				else
 					echo "filelist.txt is missing, populate to test for interesting files on NFS exports!"
 				fi
-			#Grep Based File Contents Scan
+			fi
+
+				if [ $disablegrepscans -eq 0 ]
+				then
+					#Grep Based File Contents Scan
 
 					#Loaded Grep statement to look for contents of files:
-					#for greploot in `egrep -ir "pass=|password=|" $scandir 2>/dev/null`
-					#do
-					#	local cleanloot=$(echo $greploot | cut -d"/" -f 5)
-					#	echo -e "\e[92mPossible Loot Found: $scantarget:$exporttarget/$cleanloot\e[0m"| tee $projectprefix/loot.txt
-					#done
+					for greploot in `egrep -ir "pass=|password=|" $scandir 2>/dev/null`
+					do
+						local cleanloot=$(echo $greploot | cut -d"/" -f 5)
+						echo -e "\e[92mPossible Interesting Content Found: $scantarget:$exporttarget/$cleanloot\e[0m"| tee $projectprefix/loot.txt
+					done
+				fi
 			fi
 
 			#Unmount the export
