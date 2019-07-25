@@ -9,7 +9,7 @@ ft=0
 gt=0
 disablescans=0
 disablefilescans=0
-disablegrepscans=0
+enablegrepscans=0
 disableunmount=0
 
 #Command Line Options
@@ -64,8 +64,8 @@ case $key in
     	disablefilescans=1
 	shift
 	;;
-    -dg|--disablegrepscans)
-	disablegrepscans=1
+    -eg|--enablegrepscans)
+	enablegrepscans=1
 	shift
 	;;
     -du|--disbaleunmount)
@@ -201,7 +201,7 @@ targetscan () {
 			
 			if [ $disablescans -eq 0 ]
 			then
-				if [ $disablefilescans -eq 0]
+				if [ $disablefilescans -eq 0 ]
 				then
 				#Interesting File scan
 				if test -f "filelist.txt"
@@ -229,7 +229,7 @@ targetscan () {
 				fi
 			fi
 
-				if [ $disablegrepscans -eq 0 ]
+				if [ $enablegrepscans -eq 1 ]
 				then
 					#Grep Based File Contents Scan
 
