@@ -30,7 +30,7 @@ case $key in
 	echo "-t   --  Text file containing a list of IP's to scan. All exports on each host is scanned."
 	echo "-s   --  Single host to scan. Scans all exports on host"
 	echo "-dt  --  Discovery Timeout. Useful for slow networks to skip over very slow hosts. Default 5 seconds."
-    	echo "-ft  --  File Scan Timeout. Sets maxiumum scan timeout for recursive filetype discovery, per host.  Default 10 minutes."
+    	echo "-ft  --  File Scan Timeout. Sets maximum scan timeout for recursive filetype discovery, per host.  Default 10 minutes."
 	echo "-df  --  Disables all file scanning, only discovers exports and lists top directory lists. This is very fast."
 	echo "-du  --  Disables unmounting of all shares, allowing easy manual discovery/searching without having to remount the drives again."
 	echo ""
