@@ -224,8 +224,8 @@ targetscan () {
 			fi
 
 			echo "3 layers of $scantarget:$exporttarget" >> $hostscanlog.$exportshort.verbose
-			find $scandir -maxdepth 3 2>/dev/null >> $hostscanlog.verbose
-			echo "--------------" >> $hostscanlog.verbose
+			find $scandir -maxdepth 3 2>/dev/null >> $hostscanlog.$exportshort.verbose
+			echo "--------------" >> $hostscanlog.$exportshort.verbose
 			
 			if [ $disablescans -eq 0 ]
 			then
