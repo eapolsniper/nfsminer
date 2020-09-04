@@ -44,6 +44,7 @@ case $key in
 	echo ""
 	echo "</HELP>"
 	echo ""
+	exit
 	shift # past argument
     	shift # past value
     	;;
